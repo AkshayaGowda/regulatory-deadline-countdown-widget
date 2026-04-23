@@ -23,4 +23,10 @@ Backend work for internship capstone project.
 - `backend/src/main/java/com/internship/tool/entity/RegulatoryDeadline.java`
 - `backend/src/main/java/com/internship/tool/repository/RegulatoryDeadlineRepository.java`
 
+### Day 3
+- Implemented service layer
+- Added business logic
+- Added input validation
+- Added custom exception classes
+
 
