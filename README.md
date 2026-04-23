@@ -34,9 +34,5 @@ Backend work for internship capstone project.
 - Created `/login`, `/register`, and `/refresh`
 - Added password encryption and role support
 
-## Next Step
-- Day 6: Redis caching and RBAC
-
-
 
 
