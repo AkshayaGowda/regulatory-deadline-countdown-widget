@@ -28,13 +28,15 @@ Backend work for internship capstone project.
 - Added `POST /create` with `@Valid`
 - Added correct status codes
 
+### Day 5
+- Added JWT authentication
+- Created `JwtUtil`, `JwtAuthFilter`, and `SecurityConfig`
+- Created `/login`, `/register`, and `/refresh`
+- Added password encryption and role support
+
+## Next Step
+- Day 6: Redis caching and RBAC
 
 
-
-### Day 3
-- Implemented service layer
-- Added business logic
-- Added input validation
-- Added custom exception classes
 
 
