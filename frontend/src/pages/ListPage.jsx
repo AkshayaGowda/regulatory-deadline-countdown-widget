@@ -5,16 +5,23 @@ function ListPage({ setEditData, setPage }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔄 Fetch all records
+  // 📄 Pagination state
+  const [pageNum, setPageNum] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // 🔄 Fetch data (with pagination)
   const fetchData = () => {
     setLoading(true);
 
-    API.get("/all")
+    API.get(`/all?page=${pageNum}&size=5`)
       .then((res) => {
-        setData(res.data || []);
+        // backend may return pageable object OR list
+        const content = res.data.content || res.data;
+        setData(content);
+        setTotalPages(res.data.totalPages || 1);
       })
       .catch((err) => {
-        console.error("Error fetching data:", err);
+        console.error("Fetch error:", err);
       })
       .finally(() => {
         setLoading(false);
@@ -23,9 +30,9 @@ function ListPage({ setEditData, setPage }) {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [pageNum]);
 
-  // 🔍 Search handler
+  // 🔍 Search
   const handleSearch = (query) => {
     if (!query) {
       fetchData();
@@ -39,22 +46,22 @@ function ListPage({ setEditData, setPage }) {
       .catch((err) => console.error("Search error:", err));
   };
 
-  // ❌ Delete handler
+  // ❌ Delete
   const handleDelete = (id) => {
     API.delete(`/delete/${id}`)
       .then(() => {
         alert("Deleted successfully");
-        fetchData(); // refresh after delete
+        fetchData();
       })
       .catch((err) => console.error("Delete error:", err));
   };
 
-  // 🔄 Loading state
+  // 🔄 Loading
   if (loading) {
     return <p className="text-center mt-10">Loading...</p>;
   }
 
-  // 📭 Empty state
+  // 📭 Empty
   if (data.length === 0) {
     return <p className="text-center mt-10">No records found</p>;
   }
@@ -65,7 +72,7 @@ function ListPage({ setEditData, setPage }) {
         Regulatory Deadlines
       </h2>
 
-      {/* 🔍 Search Bar */}
+      {/* 🔍 Search */}
       <input
         type="text"
         placeholder="Search..."
@@ -119,6 +126,29 @@ function ListPage({ setEditData, setPage }) {
           ))}
         </tbody>
       </table>
+
+      {/* 📄 Pagination */}
+      <div className="mt-4 flex justify-center items-center space-x-3">
+        <button
+          onClick={() => setPageNum(pageNum - 1)}
+          disabled={pageNum === 0}
+          className="bg-gray-300 px-3 py-1"
+        >
+          Prev
+        </button>
+
+        <span>
+          Page {pageNum + 1} of {totalPages}
+        </span>
+
+        <button
+          onClick={() => setPageNum(pageNum + 1)}
+          disabled={pageNum + 1 >= totalPages}
+          className="bg-gray-300 px-3 py-1"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }
