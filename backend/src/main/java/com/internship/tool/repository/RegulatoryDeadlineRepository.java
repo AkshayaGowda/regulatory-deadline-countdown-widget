@@ -31,6 +31,17 @@ public interface RegulatoryDeadlineRepository extends JpaRepository<RegulatoryDe
             Collection<DeadlineStatus> statuses
     );
 
+    List<RegulatoryDeadline> findByReminderDateAndStatusInAndActiveTrue(
+            LocalDate reminderDate,
+            Collection<DeadlineStatus> statuses
+    );
+
+    List<RegulatoryDeadline> findByDeadlineDateBetweenAndStatusInAndActiveTrue(
+            LocalDate startDate,
+            LocalDate endDate,
+            Collection<DeadlineStatus> statuses
+    );
+
     Long countByStatusAndActiveTrue(DeadlineStatus status);
 
     boolean existsByTitleIgnoreCaseAndRegulatoryBodyIgnoreCaseAndDeadlineDate(
