@@ -1,21 +1,20 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 
-function ListPage({ setEditData, setPage }) {
+function ListPage({ setEditData, setPage, setSelectedId }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 📄 Pagination state
+  // 📄 Pagination
   const [pageNum, setPageNum] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // 🔄 Fetch data (with pagination)
+  // 🔄 Fetch data
   const fetchData = () => {
     setLoading(true);
 
     API.get(`/all?page=${pageNum}&size=5`)
       .then((res) => {
-        // backend may return pageable object OR list
         const content = res.data.content || res.data;
         setData(content);
         setTotalPages(res.data.totalPages || 1);
@@ -40,9 +39,7 @@ function ListPage({ setEditData, setPage }) {
     }
 
     API.get(`/search?q=${query}`)
-      .then((res) => {
-        setData(res.data || []);
-      })
+      .then((res) => setData(res.data || []))
       .catch((err) => console.error("Search error:", err));
   };
 
@@ -51,7 +48,7 @@ function ListPage({ setEditData, setPage }) {
     API.delete(`/delete/${id}`)
       .then(() => {
         alert("Deleted successfully");
-        fetchData();
+        fetchData(); // refresh list
       })
       .catch((err) => console.error("Delete error:", err));
   };
@@ -68,6 +65,7 @@ function ListPage({ setEditData, setPage }) {
 
   return (
     <div className="p-5">
+
       <h2 className="text-xl font-bold mb-4">
         Regulatory Deadlines
       </h2>
@@ -103,6 +101,18 @@ function ListPage({ setEditData, setPage }) {
               <td className="p-2 border">{item.priority}</td>
 
               <td className="p-2 border">
+
+                {/* 👁 View */}
+                <button
+                  onClick={() => {
+                    setSelectedId(item.id);
+                    setPage("detail");
+                  }}
+                  className="bg-blue-500 text-white px-2 py-1 mr-2"
+                >
+                  View
+                </button>
+
                 {/* ✏️ Edit */}
                 <button
                   onClick={() => {
@@ -121,6 +131,7 @@ function ListPage({ setEditData, setPage }) {
                 >
                   Delete
                 </button>
+
               </td>
             </tr>
           ))}
@@ -149,6 +160,7 @@ function ListPage({ setEditData, setPage }) {
           Next
         </button>
       </div>
+
     </div>
   );
 }
