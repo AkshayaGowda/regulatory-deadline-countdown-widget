@@ -34,5 +34,15 @@ Backend work for internship capstone project.
 - Created `/login`, `/register`, and `/refresh`
 - Added password encryption and role support
 
+### Day 6
+- Added Redis caching
+- Added `@Cacheable` for GET endpoints
+- Added `@CacheEvict` for write operations
+- Added RBAC using `@PreAuthorize`
+- Configured 10 minute cache TTL
+
+## Next Step
+- Day 7: Email notifications
+
 
 

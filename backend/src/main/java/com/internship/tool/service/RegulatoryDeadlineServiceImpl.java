@@ -14,8 +14,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +37,7 @@ public class RegulatoryDeadlineServiceImpl implements RegulatoryDeadlineService 
     private final Validator validator;
 
     @Override
+    @CacheEvict(value = {"deadlineById", "deadlinesPage"}, allEntries = true)
     public RegulatoryDeadline createDeadline(RegulatoryDeadline regulatoryDeadline) {
         RegulatoryDeadline sanitizedDeadline = sanitizeDeadline(regulatoryDeadline);
         validateDeadline(sanitizedDeadline);
@@ -50,6 +55,7 @@ public class RegulatoryDeadlineServiceImpl implements RegulatoryDeadlineService 
     }
 
     @Override
+    @CacheEvict(value = {"deadlineById", "deadlinesPage"}, allEntries = true)
     public RegulatoryDeadline updateDeadline(Long id, RegulatoryDeadline regulatoryDeadline) {
         RegulatoryDeadline existingDeadline = getActiveDeadline(id);
         RegulatoryDeadline sanitizedDeadline = sanitizeDeadline(regulatoryDeadline);
@@ -79,6 +85,7 @@ public class RegulatoryDeadlineServiceImpl implements RegulatoryDeadlineService 
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "deadlineById", key = "#id")
     public RegulatoryDeadline getDeadlineById(Long id) {
         return getActiveDeadline(id);
     }
@@ -86,6 +93,14 @@ public class RegulatoryDeadlineServiceImpl implements RegulatoryDeadlineService 
     @Override
     @Transactional(readOnly = true)
     public Page<RegulatoryDeadline> getAllActiveDeadlines(Pageable pageable) {
+        return regulatoryDeadlineRepository.findAllByActiveTrue(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "deadlinesPage", key = "T(String).format('%s-%s-%s', #page, #size, #sortBy)")
+    public Page<RegulatoryDeadline> getAllActiveDeadlines(int page, int size, String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy).ascending());
         return regulatoryDeadlineRepository.findAllByActiveTrue(pageable);
     }
 
@@ -139,6 +154,7 @@ public class RegulatoryDeadlineServiceImpl implements RegulatoryDeadlineService 
     }
 
     @Override
+    @CacheEvict(value = {"deadlineById", "deadlinesPage"}, allEntries = true)
     public void softDeleteDeadline(Long id) {
         RegulatoryDeadline existingDeadline = getActiveDeadline(id);
         existingDeadline.setActive(Boolean.FALSE);

@@ -13,9 +13,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,13 +31,21 @@ public class RegulatoryDeadlineController {
     private final RegulatoryDeadlineService regulatoryDeadlineService;
 
     @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     public ResponseEntity<Page<RegulatoryDeadline>> getAllDeadlines(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "deadlineDate") String sortBy,
             @PageableDefault(size = 10, sort = "deadlineDate") Pageable pageable
     ) {
-        return ResponseEntity.ok(regulatoryDeadlineService.getAllActiveDeadlines(pageable));
+        if (pageable.isPaged() && pageable.getPageNumber() == 0 && pageable.getPageSize() == 10 && "deadlineDate".equals(sortBy)) {
+            return ResponseEntity.ok(regulatoryDeadlineService.getAllActiveDeadlines(page, size, sortBy));
+        }
+        return ResponseEntity.ok(regulatoryDeadlineService.getAllActiveDeadlines(page, size, sortBy));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     public ResponseEntity<RegulatoryDeadline> getDeadlineById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(regulatoryDeadlineService.getDeadlineById(id));
@@ -47,6 +57,7 @@ public class RegulatoryDeadlineController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<RegulatoryDeadline> createDeadline(@Valid @RequestBody RegulatoryDeadline regulatoryDeadline) {
         try {
             RegulatoryDeadline createdDeadline = regulatoryDeadlineService.createDeadline(regulatoryDeadline);

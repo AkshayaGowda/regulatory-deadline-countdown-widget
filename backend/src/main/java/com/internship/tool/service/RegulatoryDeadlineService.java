@@ -17,6 +17,8 @@ public interface RegulatoryDeadlineService {
 
     Page<RegulatoryDeadline> getAllActiveDeadlines(Pageable pageable);
 
+    Page<RegulatoryDeadline> getAllActiveDeadlines(int page, int size, String sortBy);
+
     Page<RegulatoryDeadline> getDeadlinesByStatus(DeadlineStatus status, Pageable pageable);
 
     Page<RegulatoryDeadline> searchDeadlines(String keyword, Pageable pageable);
