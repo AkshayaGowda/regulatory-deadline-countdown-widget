@@ -5,62 +5,66 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔎 Search + Filters
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   // 📄 Pagination
   const [pageNum, setPageNum] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+  // ⏱ Debounce search (500ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // 🔄 Fetch data
   const fetchData = () => {
     setLoading(true);
 
-    API.get(`/all?page=${pageNum}&size=5`)
+    API.get("/search", {
+      params: {
+        q: debouncedSearch,
+        status: status,
+        fromDate: fromDate,
+        toDate: toDate,
+        page: pageNum,
+        size: 5,
+      },
+    })
       .then((res) => {
         const content = res.data.content || res.data;
         setData(content);
         setTotalPages(res.data.totalPages || 1);
       })
-      .catch((err) => {
-        console.error("Fetch error:", err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      .catch((err) => console.error("Fetch error:", err))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     fetchData();
-  }, [pageNum]);
-
-  // 🔍 Search
-  const handleSearch = (query) => {
-    if (!query) {
-      fetchData();
-      return;
-    }
-
-    API.get(`/search?q=${query}`)
-      .then((res) => setData(res.data || []))
-      .catch((err) => console.error("Search error:", err));
-  };
+  }, [debouncedSearch, status, fromDate, toDate, pageNum]);
 
   // ❌ Delete
   const handleDelete = (id) => {
     API.delete(`/delete/${id}`)
       .then(() => {
         alert("Deleted successfully");
-        fetchData(); // refresh list
+        fetchData();
       })
-      .catch((err) => console.error("Delete error:", err));
+      .catch((err) => console.error(err));
   };
 
-  // 🔄 Loading
+  // 🔄 Loading state
   if (loading) {
     return <p className="text-center mt-10">Loading...</p>;
-  }
-
-  // 📭 Empty
-  if (data.length === 0) {
-    return <p className="text-center mt-10">No records found</p>;
   }
 
   return (
@@ -70,75 +74,112 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
         Regulatory Deadlines
       </h2>
 
-      {/* 🔍 Search */}
-      <input
-        type="text"
-        placeholder="Search..."
-        className="border p-2 mb-4 w-full"
-        onChange={(e) => handleSearch(e.target.value)}
-      />
+      {/* 🔎 FILTER BAR */}
+      <div className="flex flex-wrap gap-3 mb-4">
 
-      {/* 📊 Table */}
-      <table className="w-full border border-gray-300">
-        <thead className="bg-gray-200">
-          <tr>
-            <th className="p-2 border">Title</th>
-            <th className="p-2 border">Type</th>
-            <th className="p-2 border">Deadline</th>
-            <th className="p-2 border">Status</th>
-            <th className="p-2 border">Priority</th>
-            <th className="p-2 border">Actions</th>
-          </tr>
-        </thead>
+        {/* Search */}
+        <input
+          type="text"
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border p-2"
+        />
 
-        <tbody>
-          {data.map((item) => (
-            <tr key={item.id}>
-              <td className="p-2 border">{item.title}</td>
-              <td className="p-2 border">{item.regulationType}</td>
-              <td className="p-2 border">{item.deadlineDate}</td>
-              <td className="p-2 border">{item.status}</td>
-              <td className="p-2 border">{item.priority}</td>
+        {/* Status */}
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="border p-2"
+        >
+          <option value="">All Status</option>
+          <option value="UPCOMING">UPCOMING</option>
+          <option value="COMPLETED">COMPLETED</option>
+        </select>
 
-              <td className="p-2 border">
+        {/* From Date */}
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          className="border p-2"
+        />
 
-                {/* 👁 View */}
-                <button
-                  onClick={() => {
-                    setSelectedId(item.id);
-                    setPage("detail");
-                  }}
-                  className="bg-blue-500 text-white px-2 py-1 mr-2"
-                >
-                  View
-                </button>
+        {/* To Date */}
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          className="border p-2"
+        />
 
-                {/* ✏️ Edit */}
-                <button
-                  onClick={() => {
-                    setEditData(item);
-                    setPage("form");
-                  }}
-                  className="bg-yellow-500 text-white px-2 py-1 mr-2"
-                >
-                  Edit
-                </button>
+      </div>
 
-                {/* ❌ Delete */}
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="bg-red-500 text-white px-2 py-1"
-                >
-                  Delete
-                </button>
-
-              </td>
+      {/* 📊 TABLE */}
+      {data.length === 0 ? (
+        <p className="text-center mt-5">No records found</p>
+      ) : (
+        <table className="w-full border border-gray-300">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="p-2 border">Title</th>
+              <th className="p-2 border">Type</th>
+              <th className="p-2 border">Deadline</th>
+              <th className="p-2 border">Status</th>
+              <th className="p-2 border">Priority</th>
+              <th className="p-2 border">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
 
-      {/* 📄 Pagination */}
+          <tbody>
+            {data.map((item) => (
+              <tr key={item.id}>
+                <td className="p-2 border">{item.title}</td>
+                <td className="p-2 border">{item.regulationType}</td>
+                <td className="p-2 border">{item.deadlineDate}</td>
+                <td className="p-2 border">{item.status}</td>
+                <td className="p-2 border">{item.priority}</td>
+
+                <td className="p-2 border">
+
+                  {/* 👁 View */}
+                  <button
+                    onClick={() => {
+                      setSelectedId(item.id);
+                      setPage("detail");
+                    }}
+                    className="bg-blue-500 text-white px-2 py-1 mr-2"
+                  >
+                    View
+                  </button>
+
+                  {/* ✏️ Edit */}
+                  <button
+                    onClick={() => {
+                      setEditData(item);
+                      setPage("form");
+                    }}
+                    className="bg-yellow-500 text-white px-2 py-1 mr-2"
+                  >
+                    Edit
+                  </button>
+
+                  {/* ❌ Delete */}
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="bg-red-500 text-white px-2 py-1"
+                  >
+                    Delete
+                  </button>
+
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* 📄 PAGINATION */}
       <div className="mt-4 flex justify-center items-center space-x-3">
         <button
           onClick={() => setPageNum(pageNum - 1)}

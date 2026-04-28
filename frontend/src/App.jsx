@@ -8,7 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AuthProvider from "./context/AuthContext";
 
 function App() {
-  const [page, setPage] = useState("dashboard"); // start from login
+  const [page, setPage] = useState("login"); // start from login
   const [editData, setEditData] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
 
