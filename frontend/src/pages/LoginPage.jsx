@@ -17,7 +17,7 @@ function LoginPage({ setPage }) {
     e.preventDefault();
 
     if (!form.username || !form.password) {
-      setError("All fields are required");
+      setError("Please fill all fields");
       return;
     }
 
@@ -26,92 +26,107 @@ function LoginPage({ setPage }) {
 
     API.post("/login", form)
       .then((res) => {
-        login(res.data.token); // store token
-        setPage("list");
+        login(res.data.token);
+        setPage("dashboard");
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         setError("Invalid username or password");
       })
       .finally(() => setLoading(false));
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-blue-300">
+    <div className="min-h-screen flex flex-col md:flex-row">
 
-      <div className="bg-white shadow-xl rounded-xl p-6 w-80">
+      {/* 🔵 LEFT SIDE (Branding) */}
+      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 text-white items-center justify-center p-10">
 
-        {/* Title */}
-        <h2 className="text-2xl font-bold text-center mb-2">
-          Welcome Back
-        </h2>
-
-        <p className="text-center text-gray-500 mb-4">
-          Login to your account
-        </p>
-
-        {/* Error */}
-        {error && (
-          <p className="text-red-500 text-sm mb-3 text-center">
-            {error}
+        <div>
+          <h1 className="text-4xl font-bold mb-4">
+            Regulatory Tracker
+          </h1>
+          <p className="text-lg text-blue-100">
+            Manage deadlines, track compliance, and stay ahead.
           </p>
-        )}
+        </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
+      </div>
 
-          {/* Username */}
-          <input
-            type="text"
-            placeholder="Username"
-            value={form.username}
-            onChange={(e) =>
-              setForm({ ...form, username: e.target.value })
-            }
-            className="border p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
+      {/* ⚪ RIGHT SIDE (Login Form) */}
+      <div className="flex w-full md:w-1/2 items-center justify-center bg-gray-100 p-6">
 
-          {/* Password */}
-          <input
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.target.value })
-            }
-            className="border p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
+        <div className="bg-white shadow-xl rounded-xl p-8 w-full max-w-sm">
 
-          {/* Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700 transition"
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
+          {/* Title */}
+          <h2 className="text-2xl font-bold text-center mb-2">
+            Welcome Back 👋
+          </h2>
 
-        </form>
-
-        {/* Links */}
-        <div className="text-center mt-4 text-sm">
-
-          <p
-            onClick={() => setPage("forgot")}
-            className="text-blue-500 cursor-pointer hover:underline"
-          >
-            Forgot Password?
+          <p className="text-center text-gray-500 mb-6">
+            Login to continue
           </p>
 
-          <p className="mt-2 text-gray-600">
-            New user?{" "}
-            <span
-              onClick={() => setPage("register")}
+          {/* Error */}
+          {error && (
+            <div className="bg-red-100 text-red-600 p-2 text-sm rounded mb-4 text-center">
+              {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+
+            <input
+              type="text"
+              placeholder="Username"
+              value={form.username}
+              onChange={(e) =>
+                setForm({ ...form, username: e.target.value })
+              }
+              className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
+              className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            >
+              {loading ? "Signing in..." : "Login"}
+            </button>
+
+          </form>
+
+          {/* Links */}
+          <div className="text-center mt-5 text-sm">
+
+            <p
+              onClick={() => setPage("forgot")}
               className="text-blue-500 cursor-pointer hover:underline"
             >
-              Create Account
-            </span>
-          </p>
+              Forgot Password?
+            </p>
+
+            <p className="mt-2 text-gray-600">
+              New user?{" "}
+              <span
+                onClick={() => setPage("register")}
+                className="text-blue-500 cursor-pointer hover:underline"
+              >
+                Create Account
+              </span>
+            </p>
+
+          </div>
 
         </div>
 

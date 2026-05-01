@@ -4,117 +4,145 @@ import API from "../services/api";
 function DetailPage({ id, setPage, setEditData }) {
   const [data, setData] = useState(null);
 
-  // 🤖 AI state
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState(null);
 
-  // 🔄 Fetch record
   useEffect(() => {
     API.get(`/get/${id}`)
       .then((res) => setData(res.data))
       .catch((err) => console.error(err));
   }, [id]);
 
-  if (!data) return <p className="p-5">Loading...</p>;
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
-  // 🎯 Badge color logic
+  // 🎯 Priority Badge
   const badgeColor =
     data.priority === "HIGH"
-      ? "bg-red-400"
+      ? "bg-red-500"
       : data.priority === "MEDIUM"
-      ? "bg-yellow-400"
-      : "bg-green-400";
+      ? "bg-yellow-500"
+      : "bg-green-500";
 
-  // 🤖 AI CALL
+  // 🤖 AI
   const handleAI = () => {
     setAiLoading(true);
     setAiResponse(null);
 
     API.post("/ai/recommend", data)
-      .then((res) => {
-        setAiResponse(res.data);
-      })
+      .then((res) => setAiResponse(res.data))
       .catch((err) => console.error(err))
       .finally(() => setAiLoading(false));
   };
 
   return (
-    <div className="p-5">
+    <div className="min-h-screen bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
 
-      <h2 className="text-xl font-bold mb-4">Detail Page</h2>
-
-      <p><b>Title:</b> {data.title}</p>
-      <p><b>Description:</b> {data.description}</p>
-      <p><b>Type:</b> {data.regulationType}</p>
-      <p><b>Deadline:</b> {data.deadlineDate}</p>
-      <p><b>Status:</b> {data.status}</p>
-
-      {/* 🎯 SCORE BADGE */}
-      <div className="mt-3">
-        <span className={`${badgeColor} px-3 py-1 rounded text-white`}>
-          Priority: {data.priority}
-        </span>
+      {/* 🔹 HEADER */}
+      <div className="bg-white rounded-xl shadow p-4 mb-6">
+        <h2 className="text-2xl font-bold text-gray-700">
+          Deadline Details
+        </h2>
       </div>
 
-      {/* 🔧 ACTION BUTTONS */}
-      <div className="mt-4 space-x-2">
+      {/* 🔹 MAIN CARD */}
+      <div className="bg-white rounded-xl shadow p-6 max-w-3xl mx-auto">
 
-        {/* Edit */}
-        <button
-          onClick={() => {
-            setEditData(data);
-            setPage("form");
-          }}
-          className="bg-yellow-500 text-white px-3 py-1"
-        >
-          Edit
-        </button>
+        <h3 className="text-xl font-semibold mb-4">
+          {data.title}
+        </h3>
 
-        {/* Delete */}
-        <button
-          onClick={() => {
-            API.delete(`/delete/${data.id}`)
-              .then(() => {
-                alert("Deleted successfully");
-                setPage("list");
-              })
-              .catch((err) => console.error(err));
-          }}
-          className="bg-red-500 text-white px-3 py-1"
-        >
-          Delete
-        </button>
+        <p className="text-gray-600 mb-3">
+          {data.description}
+        </p>
 
-        {/* 🤖 AI Button */}
-        <button
-          onClick={handleAI}
-          className="bg-purple-500 text-white px-3 py-1"
-        >
-          AI Recommend
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
 
-      </div>
+          <p><b>Type:</b> {data.regulationType}</p>
+          <p><b>Deadline:</b> {data.deadlineDate}</p>
+          <p><b>Status:</b> {data.status}</p>
 
-      {/* 🤖 LOADING */}
-      {aiLoading && (
-        <p className="mt-4 text-center">Loading AI response...</p>
-      )}
+          <div>
+            <span className={`${badgeColor} text-white px-3 py-1 rounded`}>
+              {data.priority}
+            </span>
+          </div>
 
-      {/* 🤖 RESPONSE CARD */}
-      {aiResponse && (
-        <div className="mt-4 border p-4 bg-gray-100 rounded">
-          <h3 className="font-bold mb-2">AI Recommendations</h3>
-
-          {aiResponse.map((rec, index) => (
-            <div key={index} className="mb-3">
-              <p><b>Action:</b> {rec.action_type}</p>
-              <p><b>Description:</b> {rec.description}</p>
-              <p><b>Priority:</b> {rec.priority}</p>
-              <hr className="mt-2" />
-            </div>
-          ))}
         </div>
-      )}
+
+        {/* 🔧 ACTIONS */}
+        <div className="mt-6 flex flex-wrap gap-3">
+
+          <button
+            onClick={() => {
+              setEditData(data);
+              setPage("form");
+            }}
+            className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+          >
+            Edit
+          </button>
+
+          <button
+            onClick={() => {
+              API.delete(`/delete/${data.id}`)
+                .then(() => {
+                  alert("Deleted successfully");
+                  setPage("list");
+                })
+                .catch((err) => console.error(err));
+            }}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Delete
+          </button>
+
+          <button
+            onClick={handleAI}
+            className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+          >
+            AI Recommend
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* 🤖 AI SECTION */}
+      <div className="max-w-3xl mx-auto mt-6">
+
+        {aiLoading && (
+          <div className="bg-white p-4 rounded shadow text-center">
+            Loading AI recommendations...
+          </div>
+        )}
+
+        {aiResponse && (
+          <div className="bg-white p-5 rounded-xl shadow">
+
+            <h3 className="text-lg font-semibold mb-4">
+              AI Recommendations
+            </h3>
+
+            {aiResponse.map((rec, index) => (
+              <div key={index} className="mb-4 border-b pb-2">
+
+                <p><b>Action:</b> {rec.action_type}</p>
+                <p><b>Description:</b> {rec.description}</p>
+                <p><b>Priority:</b> {rec.priority}</p>
+
+              </div>
+            ))}
+
+          </div>
+        )}
+
+      </div>
 
     </div>
   );

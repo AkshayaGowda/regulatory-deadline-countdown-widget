@@ -1,65 +1,47 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import API from "../services/api";
 
 function ListPage({ setEditData, setPage, setSelectedId }) {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
 
+  const [data, setData] = useState([]);
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-
-  const [pageNum, setPageNum] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [file, setFile] = useState(null);
 
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState(null);
 
-  const [file, setFile] = useState(null);
+  const [pageNum, setPageNum] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // ⏱ Debounce
+  // 🔄 FETCH DATA
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  // 🔄 Fetch
-  const fetchData = () => {
-    setLoading(true);
-
-    API.get("/search", {
+    API.get("/all", {
       params: {
-        q: debouncedSearch,
+        page: pageNum,
+        search,
         status,
         fromDate,
         toDate,
-        page: pageNum,
-        size: 5,
       },
     })
       .then((res) => {
-        const content = res.data.content || res.data;
-        setData(content);
+        setData(res.data.content || res.data);
         setTotalPages(res.data.totalPages || 1);
       })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  };
+      .catch((err) => console.error(err));
+  }, [pageNum, search, status, fromDate, toDate]);
 
-  useEffect(() => {
-    fetchData();
-  }, [debouncedSearch, status, fromDate, toDate, pageNum]);
-
-  // ❌ Delete
+  // ❌ DELETE
   const handleDelete = (id) => {
+    if (!window.confirm("Delete this record?")) return;
+
     API.delete(`/delete/${id}`)
       .then(() => {
         alert("Deleted successfully");
-        fetchData();
+        setData((prev) => prev.filter((item) => item.id !== id));
       })
       .catch((err) => console.error(err));
   };
@@ -75,162 +57,193 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
       .finally(() => setAiLoading(false));
   };
 
-  // 📤 Upload
+  // 📤 UPLOAD
   const handleUpload = () => {
-    if (!file) return alert("Select file first");
-
-    if (file.type !== "text/csv") return alert("Only CSV allowed");
-
-    if (file.size > 2 * 1024 * 1024)
-      return alert("File too large (max 2MB)");
+    if (!file) return alert("Select a file");
 
     const formData = new FormData();
     formData.append("file", file);
 
     API.post("/upload", formData)
       .then(() => alert("Uploaded successfully"))
-      .catch(() => alert("Upload failed"));
+      .catch((err) => console.error(err));
   };
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
-
   return (
-    <div className="p-4 sm:p-5 md:p-6">
+    <div className="min-h-screen bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
 
-      <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4">
-        Regulatory Deadlines
-      </h2>
+      {/* 🔹 HEADER */}
+      <div className="bg-white rounded-xl shadow p-4 mb-6">
+        <h2 className="text-2xl font-bold text-gray-700">
+          Regulatory Deadlines
+        </h2>
+      </div>
 
-      {/* 🔎 FILTER */}
-      <div className="flex flex-wrap gap-3 mb-4">
+      {/* 🔹 FILTERS */}
+      <div className="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap gap-3">
+
         <input
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border p-2"
+          className="border p-2 rounded-lg"
         />
 
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="border p-2">
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="border p-2 rounded-lg"
+        >
           <option value="">All Status</option>
           <option value="UPCOMING">UPCOMING</option>
           <option value="COMPLETED">COMPLETED</option>
         </select>
 
-        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="border p-2" />
-        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="border p-2" />
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          className="border p-2 rounded-lg"
+        />
+
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          className="border p-2 rounded-lg"
+        />
 
         <button
           onClick={() => window.open("http://localhost:8080/export")}
-          className="bg-green-500 text-white px-3 py-1"
+          className="bg-green-500 text-white px-3 py-2 rounded-lg"
         >
           Export CSV
         </button>
+
       </div>
 
-      {/* 📤 Upload */}
-      <div className="mb-4">
+      {/* 📤 UPLOAD */}
+      <div className="bg-white rounded-xl shadow p-4 mb-6">
         <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-        <button onClick={handleUpload} className="bg-blue-500 text-white px-3 py-1 ml-2">
+        <button
+          onClick={handleUpload}
+          className="bg-blue-600 text-white px-3 py-2 rounded-lg ml-3"
+        >
           Upload CSV
         </button>
       </div>
 
-      {/* 📱 MOBILE VIEW */}
-      <div className="md:hidden space-y-3">
-        {data.map((item) => (
-          <div key={item.id} className="border p-3 rounded shadow">
+      {/* 💻 TABLE */}
+      <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
 
-            <p className="font-bold text-lg">{item.title}</p>
-            <p>Status: {item.status}</p>
-            <p>Priority: {item.priority}</p>
-            <p>Date: {item.deadlineDate}</p>
-
-            <div className="flex flex-wrap gap-2 mt-2">
-              <button onClick={() => {
-                setSelectedId(item.id);
-                setPage("detail");
-              }} className="bg-gray-300 px-2 py-1">View</button>
-
-              <button onClick={() => {
-                setEditData(item);
-                setPage("form");
-              }} className="bg-blue-500 text-white px-2 py-1">Edit</button>
-
-              <button onClick={() => handleDelete(item.id)} className="bg-red-500 text-white px-2 py-1">Delete</button>
-
-              <button onClick={() => handleAI(item)} className="bg-purple-500 text-white px-2 py-1">AI</button>
-            </div>
-
-          </div>
-        ))}
-      </div>
-
-      {/* 💻 DESKTOP TABLE */}
-      <div className="hidden md:block">
-        <table className="w-full border">
+        <table className="w-full text-sm">
           <thead>
-            <tr>
-              <th>Title</th>
-              <th>Type</th>
-              <th>Deadline</th>
-              <th>Status</th>
-              <th>Priority</th>
-              <th>Actions</th>
+            <tr className="border-b">
+              <th className="p-2">Title</th>
+              <th className="p-2">Type</th>
+              <th className="p-2">Deadline</th>
+              <th className="p-2">Status</th>
+              <th className="p-2">Priority</th>
+              <th className="p-2">Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {data.map((item) => (
-              <tr key={item.id}>
-                <td>{item.title}</td>
-                <td>{item.regulationType}</td>
-                <td>{item.deadlineDate}</td>
-                <td>{item.status}</td>
-                <td>{item.priority}</td>
+              <tr key={item.id} className="border-b hover:bg-gray-50">
 
-                <td className="space-x-2">
-                  <button onClick={() => {
-                    setSelectedId(item.id);
-                    setPage("detail");
-                  }}>View</button>
+                <td className="p-2">{item.title}</td>
+                <td className="p-2">{item.regulationType}</td>
+                <td className="p-2">{item.deadlineDate}</td>
+                <td className="p-2">{item.status}</td>
+                <td className="p-2">{item.priority}</td>
 
-                  <button onClick={() => {
-                    setEditData(item);
-                    setPage("form");
-                  }}>Edit</button>
+                <td className="p-2 space-x-2">
 
-                  <button onClick={() => handleDelete(item.id)}>Delete</button>
+                  <button
+                    onClick={() => {
+                      setSelectedId(item.id);
+                      setPage("detail");
+                    }}
+                    className="text-blue-600"
+                  >
+                    View
+                  </button>
 
-                  <button onClick={() => handleAI(item)}>AI</button>
+                  <button
+                    onClick={() => {
+                      setEditData(item);
+                      setPage("form");
+                    }}
+                    className="text-yellow-600"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="text-red-600"
+                  >
+                    Delete
+                  </button>
+
+                  <button
+                    onClick={() => handleAI(item)}
+                    className="text-purple-600"
+                  >
+                    AI
+                  </button>
+
                 </td>
+
               </tr>
             ))}
           </tbody>
+
         </table>
+
       </div>
 
       {/* 🤖 AI */}
-      {aiLoading && <p className="mt-4">Loading AI...</p>}
+      {aiLoading && (
+        <div className="bg-white p-4 rounded shadow mt-4 text-center">
+          Loading AI...
+        </div>
+      )}
 
       {aiResponse && (
-        <div className="mt-4 border p-3 bg-gray-100">
-          <h3 className="font-bold">AI Recommendations</h3>
+        <div className="bg-white p-5 rounded-xl shadow mt-4">
+          <h3 className="font-semibold mb-3">AI Recommendations</h3>
+
           {aiResponse.map((rec, i) => (
-            <div key={i}>
+            <div key={i} className="mb-3 border-b pb-2">
               <p><b>Action:</b> {rec.action_type}</p>
               <p><b>Description:</b> {rec.description}</p>
               <p><b>Priority:</b> {rec.priority}</p>
-              <hr />
             </div>
           ))}
         </div>
       )}
 
-      {/* 📄 Pagination */}
-      <div className="mt-4 flex justify-center gap-3">
-        <button onClick={() => setPageNum(pageNum - 1)} disabled={pageNum === 0}>Prev</button>
-        <span>Page {pageNum + 1} of {totalPages}</span>
-        <button onClick={() => setPageNum(pageNum + 1)} disabled={pageNum + 1 >= totalPages}>Next</button>
+      {/* 📄 PAGINATION */}
+      <div className="flex justify-center gap-4 mt-6 text-white">
+        <button
+          onClick={() => setPageNum(pageNum - 1)}
+          disabled={pageNum === 0}
+        >
+          Prev
+        </button>
+
+        <span>
+          Page {pageNum + 1} of {totalPages}
+        </span>
+
+        <button
+          onClick={() => setPageNum(pageNum + 1)}
+          disabled={pageNum + 1 >= totalPages}
+        >
+          Next
+        </button>
       </div>
 
     </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
-  PieChart, Pie, Cell, ResponsiveContainer
+  PieChart, Pie, Cell, ResponsiveContainer, CartesianGrid
 } from "recharts";
 
 function Analytics() {
@@ -17,6 +17,7 @@ function Analytics() {
       .catch((err) => console.error(err));
   }, []);
 
+  // 🔎 FILTER
   const filtered =
     period === "ALL"
       ? data
@@ -28,50 +29,98 @@ function Analytics() {
           return diff <= days;
         });
 
+  // 📊 STATUS
   const statusData = [
-    { name: "UPCOMING", value: filtered.filter((d) => d.status === "UPCOMING").length },
-    { name: "COMPLETED", value: filtered.filter((d) => d.status === "COMPLETED").length },
+    { name: "Upcoming", value: filtered.filter((d) => d.status === "UPCOMING").length },
+    { name: "Completed", value: filtered.filter((d) => d.status === "COMPLETED").length },
   ];
 
+  // 📊 PRIORITY
   const priorityData = [
-    { name: "HIGH", value: filtered.filter((d) => d.priority === "HIGH").length },
-    { name: "MEDIUM", value: filtered.filter((d) => d.priority === "MEDIUM").length },
-    { name: "LOW", value: filtered.filter((d) => d.priority === "LOW").length },
+    { name: "High", value: filtered.filter((d) => d.priority === "HIGH").length },
+    { name: "Medium", value: filtered.filter((d) => d.priority === "MEDIUM").length },
+    { name: "Low", value: filtered.filter((d) => d.priority === "LOW").length },
   ];
 
   return (
-    <div className="p-4 sm:p-5 md:p-6">
+    <div className="min-h-screen bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
 
-      <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4">
-        Analytics Dashboard
-      </h2>
-
-      <div className="flex flex-wrap gap-2 mb-5">
-        <button onClick={() => setPeriod("7")} className="bg-blue-500 text-white px-3 py-1 rounded">7 Days</button>
-        <button onClick={() => setPeriod("30")} className="bg-green-500 text-white px-3 py-1 rounded">30 Days</button>
-        <button onClick={() => setPeriod("ALL")} className="bg-gray-500 text-white px-3 py-1 rounded">All</button>
+      {/* 🔹 HEADER */}
+      <div className="bg-white rounded-xl shadow p-4 mb-6">
+        <h2 className="text-2xl font-bold text-gray-700">
+          Analytics Dashboard
+        </h2>
+        <p className="text-gray-500 text-sm">
+          Insights on regulatory deadlines and compliance
+        </p>
       </div>
 
-      <div className="w-full h-64 md:h-80 mb-6">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={statusData}>
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="value" />
-          </BarChart>
-        </ResponsiveContainer>
+      {/* 🔹 FILTER BUTTONS */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <button
+          onClick={() => setPeriod("7")}
+          className={`px-4 py-2 rounded-lg text-white ${period === "7" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-600"}`}
+        >
+          Last 7 Days
+        </button>
+
+        <button
+          onClick={() => setPeriod("30")}
+          className={`px-4 py-2 rounded-lg text-white ${period === "30" ? "bg-green-700" : "bg-green-500 hover:bg-green-600"}`}
+        >
+          Last 30 Days
+        </button>
+
+        <button
+          onClick={() => setPeriod("ALL")}
+          className={`px-4 py-2 rounded-lg text-white ${period === "ALL" ? "bg-gray-700" : "bg-gray-500 hover:bg-gray-600"}`}
+        >
+          All
+        </button>
       </div>
 
-      <div className="w-full h-64 md:h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={priorityData} dataKey="value" label>
-              {priorityData.map((_, i) => <Cell key={i} />)}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
+      {/* 🔹 CHART GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* 📊 BAR CHART */}
+        <div className="bg-white rounded-xl shadow p-5">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Deadline Status Overview
+          </h3>
+
+          <div className="h-72">
+            <ResponsiveContainer>
+              <BarChart data={statusData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* 🥧 PIE CHART */}
+        <div className="bg-white rounded-xl shadow p-5">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Priority Distribution
+          </h3>
+
+          <div className="h-72">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={priorityData} dataKey="value" label>
+                  {priorityData.map((_, i) => (
+                    <Cell key={i} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
       </div>
 
     </div>

@@ -1,28 +1,42 @@
 import { useState } from "react";
 
-function ForgotPassword({ setPage }) {
-  const [email, setEmail] = useState("");
+function ResetPassword({ setPage }) {
+  const [form, setForm] = useState({
+    password: "",
+    confirmPassword: "",
+  });
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!email) {
-      setError("Please enter your email");
+    if (!form.password || !form.confirmPassword) {
+      setError("All fields are required");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match");
       return;
     }
 
     setError("");
     setSuccess("");
 
-    // 🔵 Simulate API + email sending
+    // 🔵 Simulate API call
     setTimeout(() => {
-      setSuccess("Reset link sent to your email (demo)");
+      setSuccess("Password reset successful");
 
-      // 👉 simulate clicking email link after 1.5 sec
+      // redirect to login
       setTimeout(() => {
-        setPage("reset");
+        setPage("login");
       }, 1500);
     }, 800);
   };
@@ -36,8 +50,9 @@ function ForgotPassword({ setPage }) {
           <h1 className="text-5xl font-bold mb-4 leading-tight">
             Regulatory Tracker
           </h1>
+
           <p className="text-lg text-blue-100 max-w-md">
-            Reset your password securely and continue managing deadlines.
+            Set a new password to secure your account and continue your workflow.
           </p>
         </div>
       </div>
@@ -48,11 +63,11 @@ function ForgotPassword({ setPage }) {
         <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-sm border border-gray-100">
 
           <h2 className="text-2xl font-bold text-center mb-2">
-            Forgot Password
+            Reset Password
           </h2>
 
           <p className="text-center text-gray-500 mb-5">
-            Enter your email to receive reset link
+            Enter your new password
           </p>
 
           {/* ❌ ERROR */}
@@ -73,10 +88,22 @@ function ForgotPassword({ setPage }) {
           <form onSubmit={handleSubmit} className="space-y-4">
 
             <input
-              type="email"
-              placeholder="Enter Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="password"
+              placeholder="New Password"
+              value={form.password}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={form.confirmPassword}
+              onChange={(e) =>
+                setForm({ ...form, confirmPassword: e.target.value })
+              }
               className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
 
@@ -84,7 +111,7 @@ function ForgotPassword({ setPage }) {
               type="submit"
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
             >
-              Send Reset Link
+              Reset Password
             </button>
 
           </form>
@@ -104,4 +131,4 @@ function ForgotPassword({ setPage }) {
   );
 }
 
-export default ForgotPassword;
+export default ResetPassword;

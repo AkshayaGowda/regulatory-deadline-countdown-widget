@@ -15,49 +15,48 @@ function App() {
   const [editData, setEditData] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
 
-  // 🔴 Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     setPage("login");
   };
 
+  const navBtn = (name, label) => (
+    <button
+      onClick={() => setPage(name)}
+      className={`px-4 py-2 rounded-lg transition ${
+        page === name
+          ? "bg-blue-600 text-white"
+          : "bg-gray-200 hover:bg-gray-300"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <AuthProvider>
       <div>
 
-        {/* 🔐 AUTH PAGES (NO NAVBAR) */}
+        {/* 🔐 AUTH PAGES */}
         {page === "login" && <LoginPage setPage={setPage} />}
         {page === "register" && <RegisterPage setPage={setPage} />}
         {page === "forgot" && <ForgotPassword setPage={setPage} />}
 
-        {/* 🌐 NAVBAR (ONLY AFTER LOGIN) */}
+        {/* 🌐 NAVBAR */}
         {!["login", "register", "forgot"].includes(page) && (
-          <div className="p-3 flex flex-wrap gap-2 bg-gray-100">
+          <div className="bg-white shadow p-4 flex justify-between items-center">
 
-            <button
-              onClick={() => setPage("dashboard")}
-              className="bg-gray-300 px-3 py-1 rounded"
-            >
-              Dashboard
-            </button>
+            {/* LEFT */}
+            <div className="flex gap-3">
+              {navBtn("dashboard", "Dashboard")}
+              {navBtn("list", "Deadlines")}
+              {navBtn("analytics", "Analytics")}
+            </div>
 
-            <button
-              onClick={() => setPage("list")}
-              className="bg-green-500 text-white px-3 py-1 rounded"
-            >
-              List
-            </button>
-
-            <button
-              onClick={() => setPage("analytics")}
-              className="bg-purple-500 text-white px-3 py-1 rounded"
-            >
-              Analytics
-            </button>
-
+            {/* RIGHT */}
             <button
               onClick={handleLogout}
-              className="bg-red-500 text-white px-3 py-1 rounded"
+              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
             >
               Logout
             </button>
