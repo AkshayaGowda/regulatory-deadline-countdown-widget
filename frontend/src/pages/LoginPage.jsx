@@ -6,41 +6,46 @@ function LoginPage({ setPage }) {
   const { login } = useContext(AuthContext);
 
   const [form, setForm] = useState({
-    username: "",
+    email: "",
     password: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
- const handleSubmit = (e) => {
-  e.preventDefault();
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  if (!form.username || !form.password) {
-    setError("Please fill all fields");
-    return;
-  }
+    if (!form.email.trim() || !form.password) {
+      setError("Please fill all fields");
+      return;
+    }
 
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  API.post("/login", form)
-    .then((res) => {
-      login(res.data.token);   // backend JWT
-      setPage("dashboard");
+    API.post("/auth/login", {
+      email: form.email.trim(),
+      password: form.password,
     })
-    .catch(() => {
-      setError("Invalid username or password");
-    })
-    .finally(() => setLoading(false));
-};
+      .then((res) => {
+        login(res.data); // ✅ FIXED
+        setPage("dashboard");
+      })
+      .catch((err) => {
+        const msg =
+          err.response?.data?.message ||
+          "Invalid email or password";
+        setError(msg);
+      })
+      .finally(() => setLoading(false));
+  };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
 
-      {/* 🔵 LEFT SIDE (Branding) */}
+      {/* LEFT */}
       <div className="hidden md:flex w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 text-white items-center justify-center p-10">
-
         <div>
           <h1 className="text-4xl font-bold mb-4">
             Regulatory Tracker
@@ -49,15 +54,13 @@ function LoginPage({ setPage }) {
             Manage deadlines, track compliance, and stay ahead.
           </p>
         </div>
-
       </div>
 
-      {/* ⚪ RIGHT SIDE (Login Form) */}
+      {/* RIGHT */}
       <div className="flex w-full md:w-1/2 items-center justify-center bg-gray-100 p-6">
 
         <div className="bg-white shadow-xl rounded-xl p-8 w-full max-w-sm">
 
-          {/* Title */}
           <h2 className="text-2xl font-bold text-center mb-2">
             Welcome Back 👋
           </h2>
@@ -66,24 +69,22 @@ function LoginPage({ setPage }) {
             Login to continue
           </p>
 
-          {/* Error */}
           {error && (
             <div className="bg-red-100 text-red-600 p-2 text-sm rounded mb-4 text-center">
               {error}
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
 
             <input
-              type="text"
-              placeholder="Username"
-              value={form.username}
+              type="email"
+              placeholder="Email"
+              value={form.email}
               onChange={(e) =>
-                setForm({ ...form, username: e.target.value })
+                setForm({ ...form, email: e.target.value })
               }
-              className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-400"
             />
 
             <input
@@ -93,7 +94,7 @@ function LoginPage({ setPage }) {
               onChange={(e) =>
                 setForm({ ...form, password: e.target.value })
               }
-              className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-400"
             />
 
             <button
@@ -106,7 +107,6 @@ function LoginPage({ setPage }) {
 
           </form>
 
-          {/* Links */}
           <div className="text-center mt-5 text-sm">
 
             <p

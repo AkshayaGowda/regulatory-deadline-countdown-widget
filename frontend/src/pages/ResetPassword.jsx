@@ -1,23 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import API from "../services/api";
 
 function ResetPassword({ setPage }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [token, setToken] = useState("");
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get("token");
-
-    if (!t) {
-      setMsg("Invalid reset link");
-      return;
-    }
-
-    setToken(t);
-  }, []);
+  // ✅ FIX: GET TOKEN WITHOUT ROUTER
+  const token = new URLSearchParams(window.location.search).get("token");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -27,20 +18,41 @@ function ResetPassword({ setPage }) {
       return;
     }
 
+    if (password.length < 6) {
+      setMsg("Password must be at least 6 characters");
+      return;
+    }
+
     if (password !== confirm) {
       setMsg("Passwords do not match");
       return;
     }
 
+    if (!token) {
+      setMsg("Invalid or missing token");
+      return;
+    }
+
+    setLoading(true);
+    setMsg("");
+
+    // ✅ FIX: SEND JSON BODY (NOT params)
     API.post("/auth/reset-password", {
-      token,
-      password,
+      token: token,
+      newPassword: password
     })
       .then(() => {
         alert("Password updated successfully");
         setPage("login");
       })
-      .catch(() => setMsg("Invalid or expired token"));
+      .catch((err) => {
+        if (err.response?.data?.message) {
+          setMsg(err.response.data.message);
+        } else {
+          setMsg("Reset failed");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -84,7 +96,7 @@ function ResetPassword({ setPage }) {
               placeholder="New Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border p-3 rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full border p-3 rounded"
             />
 
             <input
@@ -92,18 +104,21 @@ function ResetPassword({ setPage }) {
               placeholder="Confirm Password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className="w-full border p-3 rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full border p-3 rounded"
             />
 
-            <button className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700">
-              Update Password
+            <button
+              disabled={loading}
+              className="w-full bg-green-600 text-white py-3 rounded"
+            >
+              {loading ? "Updating..." : "Update Password"}
             </button>
 
           </form>
 
           <p
-            onClick={() => setPage("login")}
-            className="text-center mt-4 text-blue-500 cursor-pointer hover:underline"
+            onClick={() => setPage("login")}   // ✅ FIXED
+            className="text-center mt-4 text-blue-500 cursor-pointer"
           >
             Back to Login
           </p>

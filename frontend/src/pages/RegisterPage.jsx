@@ -1,10 +1,11 @@
 import { useState } from "react";
+import API from "../services/api";
 
 function RegisterPage({ setPage }) {
+
   const [form, setForm] = useState({
     name: "",
     email: "",
-    phone: "",
     password: "",
     confirmPassword: "",
   });
@@ -14,13 +15,8 @@ function RegisterPage({ setPage }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!form.name || !form.email || !form.phone || !form.password || !form.confirmPassword) {
+    if (!form.name.trim() || !form.email.trim() || !form.password || !form.confirmPassword) {
       setError("All fields are required");
-      return;
-    }
-
-    if (!/^\d{10}$/.test(form.phone)) {
-      setError("Phone number must be 10 digits");
       return;
     }
 
@@ -36,14 +32,27 @@ function RegisterPage({ setPage }) {
 
     setError("");
 
-    alert("Account created successfully (demo)");
-    setPage("login");
+    API.post("/auth/register", {
+      name: form.name.trim(),
+      email: form.email.trim(),
+      password: form.password,
+    })
+      .then(() => {
+        alert("Account created successfully");
+        setPage("login");
+      })
+      .catch((err) => {
+        const msg =
+          err.response?.data?.message ||
+          "Registration failed";
+        setError(msg);
+      });
   };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
 
-      {/* 🔵 LEFT SIDE (NOW BLUE SAME AS LOGIN) */}
+      {/* LEFT */}
       <div className="hidden md:flex w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 text-white items-center justify-center p-10">
         <div>
           <h1 className="text-5xl font-bold mb-4 leading-tight">
@@ -55,7 +64,7 @@ function RegisterPage({ setPage }) {
         </div>
       </div>
 
-      {/* ⚪ RIGHT SIDE */}
+      {/* RIGHT */}
       <div className="flex w-full md:w-1/2 items-center justify-center bg-gray-100 p-6">
 
         <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-sm border border-gray-100">
@@ -80,7 +89,7 @@ function RegisterPage({ setPage }) {
               placeholder="Full Name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border p-3 rounded-lg"
             />
 
             <input
@@ -88,15 +97,7 @@ function RegisterPage({ setPage }) {
               placeholder="Email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-
-            <input
-              type="text"
-              placeholder="Phone Number"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border p-3 rounded-lg"
             />
 
             <input
@@ -104,7 +105,7 @@ function RegisterPage({ setPage }) {
               placeholder="Password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border p-3 rounded-lg"
             />
 
             <input
@@ -112,12 +113,12 @@ function RegisterPage({ setPage }) {
               placeholder="Confirm Password"
               value={form.confirmPassword}
               onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border p-3 rounded-lg"
             />
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg"
             >
               Register
             </button>
@@ -126,7 +127,7 @@ function RegisterPage({ setPage }) {
 
           <p
             onClick={() => setPage("login")}
-            className="text-center mt-5 text-blue-500 cursor-pointer hover:underline"
+            className="text-center mt-5 text-blue-500 cursor-pointer"
           >
             Back to Login
           </p>

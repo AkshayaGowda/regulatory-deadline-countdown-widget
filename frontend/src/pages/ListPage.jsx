@@ -11,49 +11,64 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
 
-  // 🔥 Debounce search
+  // 🔍 Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSearch(searchInput);
-    }, 500);
+      setPageNum(0); // ✅ reset page
+      setSearch(searchInput.trim());
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // 🔄 Fetch data
+  // 🔄 Fetch data (FIXED)
   useEffect(() => {
     setLoading(true);
 
-    API.get("/all", {
-      params: {
-        page: pageNum,
-        search,
-        status,
-        fromDate,
-        toDate,
-      },
-    })
+    const url = search
+      ? "/deadlines/search"
+      : "/deadlines/all";
+
+    const params = search
+      ? { q: search, page: pageNum, size: 10 }
+      : { page: pageNum, size: 10, sortBy: "deadlineDate" };
+
+    API.get(url, { params })
       .then((res) => {
-        setData(res.data.content || res.data);
+        setData(res.data.content || []);
         setTotalPages(res.data.totalPages || 1);
       })
       .catch((err) => console.error("Error fetching:", err))
       .finally(() => setLoading(false));
-  }, [pageNum, search, status, fromDate, toDate]);
 
-  // ❌ Delete (soft)
+  }, [pageNum, search]);
+
+  // 🎯 STATUS BADGE
+  const getStatusBadge = (status) => {
+    if (status === "COMPLETED") return "bg-green-600 text-white";
+    if (status === "OVERDUE") return "bg-red-600 text-white";
+    if (status === "IN_PROGRESS") return "bg-blue-600 text-white";
+    return "bg-gray-500 text-white";
+  };
+
+  // 🎯 PRIORITY BADGE
+  const getPriorityBadge = (priority) => {
+    if (priority === "CRITICAL") return "bg-red-700 text-white";
+    if (priority === "HIGH") return "bg-red-500 text-white";
+    if (priority === "MEDIUM") return "bg-yellow-500 text-white";
+    return "bg-green-500 text-white";
+  };
+
+  // ❌ DELETE
   const handleDelete = (id) => {
     if (!window.confirm("Delete this record?")) return;
 
-    API.delete(`/delete/${id}`)
+    API.delete(`/deadlines/${id}`)
       .then(() => {
         setData((prev) => prev.filter((item) => item.id !== id));
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.error("Delete error:", err));
   };
 
   return (
@@ -75,47 +90,14 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
           </button>
         </div>
 
-        {/* FILTERS */}
-        <div className="bg-white p-4 rounded-xl shadow mb-6 flex flex-wrap gap-3">
-
+        {/* SEARCH */}
+        <div className="bg-white p-4 rounded-xl shadow mb-6">
           <input
             placeholder="Search..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="border p-2 rounded-lg"
+            className="border p-2 rounded-lg w-full"
           />
-
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="border p-2 rounded-lg"
-          >
-            <option value="">All Status</option>
-            <option value="UPCOMING">UPCOMING</option>
-            <option value="COMPLETED">COMPLETED</option>
-          </select>
-
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="border p-2 rounded-lg"
-          />
-
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="border p-2 rounded-lg"
-          />
-
-          <button
-            onClick={() => window.open("http://localhost:8080/export")}
-            className="bg-green-500 text-white px-3 py-2 rounded-lg"
-          >
-            Export CSV
-          </button>
-
         </div>
 
         {/* TABLE */}
@@ -130,7 +112,7 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
               <thead>
                 <tr className="border-b">
                   <th className="p-2">Title</th>
-                  <th className="p-2">Type</th>
+                  <th className="p-2">Regulatory Body</th>
                   <th className="p-2">Deadline</th>
                   <th className="p-2">Status</th>
                   <th className="p-2">Priority</th>
@@ -141,15 +123,23 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
               <tbody>
                 {data.map((item) => (
                   <tr key={item.id} className="border-b hover:bg-gray-50">
-
                     <td className="p-2">{item.title}</td>
-                    <td className="p-2">{item.regulationType}</td>
+                    <td className="p-2">{item.regulatoryBody || "-"}</td>
                     <td className="p-2">{item.deadlineDate}</td>
-                    <td className="p-2">{item.status}</td>
-                    <td className="p-2">{item.priority}</td>
+
+                    <td className="p-2">
+                      <span className={`${getStatusBadge(item.status)} px-2 py-1 rounded`}>
+                        {item.status}
+                      </span>
+                    </td>
+
+                    <td className="p-2">
+                      <span className={`${getPriorityBadge(item.priority)} px-2 py-1 rounded`}>
+                        {item.priority}
+                      </span>
+                    </td>
 
                     <td className="p-2 space-x-2">
-
                       <button
                         onClick={() => {
                           setSelectedId(item.id);
@@ -176,12 +166,11 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
                       >
                         Delete
                       </button>
-
                     </td>
-
                   </tr>
                 ))}
               </tbody>
+
             </table>
 
           </div>

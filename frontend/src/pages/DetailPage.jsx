@@ -3,35 +3,64 @@ import API from "../services/api";
 
 function DetailPage({ id, setPage, setEditData }) {
   const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
 
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState(null);
 
+  // ✅ LOAD DATA
   useEffect(() => {
-    API.get(`/${id}`)
+    API.get(`/deadlines/${id}`)
       .then((res) => setData(res.data))
-      .catch(() => console.error("Error loading data"));
+      .catch(() => setError("Failed to load deadline"));
   }, [id]);
 
-  if (!data) {
-    return <p className="text-center mt-10">Loading...</p>;
+  if (error) {
+    return <p className="text-center text-red-200 mt-10">{error}</p>;
   }
 
-  // 🎯 Priority Badge
-  const getBadge = (priority) => {
+  if (!data) {
+    return <p className="text-center mt-10 text-white">Loading...</p>;
+  }
+
+  // 🎯 PRIORITY BADGE
+  const getPriorityBadge = (priority) => {
+    if (priority === "CRITICAL") return "bg-red-700 text-white";
     if (priority === "HIGH") return "bg-red-500 text-white";
     if (priority === "MEDIUM") return "bg-yellow-500 text-white";
     return "bg-green-500 text-white";
   };
 
-  // 🤖 AI CALL
+  // 🎯 STATUS BADGE
+  const getStatusBadge = (status) => {
+    if (status === "COMPLETED") return "bg-green-600 text-white";
+    if (status === "OVERDUE") return "bg-red-600 text-white";
+    if (status === "IN_PROGRESS") return "bg-blue-600 text-white";
+    return "bg-gray-500 text-white";
+  };
+
+  // 🗑️ DELETE (SAFE)
+  const handleDelete = () => {
+    if (!window.confirm("Are you sure you want to delete this deadline?")) {
+      return;
+    }
+
+    API.delete(`/deadlines/${data.id}`)
+      .then(() => {
+        alert("Deleted successfully");
+        setPage("list");
+      })
+      .catch(() => alert("Delete failed"));
+  };
+
+  // 🤖 AI CALL (OPTIONAL FEATURE)
   const handleAI = () => {
     setAiLoading(true);
     setAiResponse(null);
 
     API.post("/ai/recommend", data)
       .then((res) => setAiResponse(res.data))
-      .catch(() => alert("AI error"))
+      .catch(() => alert("AI service not available"))
       .finally(() => setAiLoading(false));
   };
 
@@ -54,12 +83,19 @@ function DetailPage({ id, setPage, setEditData }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-4">
 
-          <p><b>Type:</b> {data.regulationType}</p>
+          <p><b>Regulatory Body:</b> {data.regulatoryBody}</p>
           <p><b>Deadline:</b> {data.deadlineDate}</p>
-          <p><b>Status:</b> {data.status}</p>
 
           <div>
-            <span className={`${getBadge(data.priority)} px-3 py-1 rounded`}>
+            <b>Status:</b>{" "}
+            <span className={`${getStatusBadge(data.status)} px-2 py-1 rounded`}>
+              {data.status}
+            </span>
+          </div>
+
+          <div>
+            <b>Priority:</b>{" "}
+            <span className={`${getPriorityBadge(data.priority)} px-2 py-1 rounded`}>
               {data.priority}
             </span>
           </div>
@@ -67,7 +103,7 @@ function DetailPage({ id, setPage, setEditData }) {
         </div>
 
         {/* ACTIONS */}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
 
           <button
             onClick={() => {
@@ -80,14 +116,7 @@ function DetailPage({ id, setPage, setEditData }) {
           </button>
 
           <button
-            onClick={() => {
-              API.delete(`/${data.id}`)
-                .then(() => {
-                  alert("Deleted successfully");
-                  setPage("list");
-                })
-                .catch(() => alert("Delete failed"));
-            }}
+            onClick={handleDelete}
             className="bg-red-500 text-white px-4 py-2 rounded"
           >
             Delete
@@ -121,11 +150,9 @@ function DetailPage({ id, setPage, setEditData }) {
 
           {aiResponse.map((rec, i) => (
             <div key={i} className="border-b pb-2 mb-2">
-
               <p><b>Action:</b> {rec.action_type}</p>
               <p><b>Description:</b> {rec.description}</p>
               <p><b>Priority:</b> {rec.priority}</p>
-
             </div>
           ))}
 

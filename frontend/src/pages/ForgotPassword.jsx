@@ -4,6 +4,7 @@ import API from "../services/api";
 function ForgotPassword({ setPage }) {
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -13,13 +14,24 @@ function ForgotPassword({ setPage }) {
       return;
     }
 
-    API.post("/auth/forgot-password", { email })
-      .then((res) => {
-        setMsg("Reset link generated! Check alert.");
-        alert("Reset Link:\n" + res.data.link);
-        setPage("reset");
+    setLoading(true);
+    setMsg("");
+
+    // ✅ REAL BACKEND CALL
+   API.post("/auth/forgot-password", {
+  email: email
+})
+      .then(() => {
+        setMsg("Reset link sent to your email");
       })
-      .catch(() => setMsg("User not found"));
+      .catch((err) => {
+        if (err.response?.data?.message) {
+          setMsg(err.response.data.message);
+        } else {
+          setMsg("Failed to send reset link");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -66,8 +78,11 @@ function ForgotPassword({ setPage }) {
               className="w-full border p-3 rounded focus:ring-2 focus:ring-blue-500"
             />
 
-            <button className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700">
-              Send Reset Link
+            <button
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700"
+            >
+              {loading ? "Sending..." : "Send Reset Link"}
             </button>
 
           </form>
