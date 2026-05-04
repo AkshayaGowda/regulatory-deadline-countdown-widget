@@ -71,6 +71,29 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
       .catch((err) => console.error("Delete error:", err));
   };
 
+  // 📥 EXPORT CSV
+const handleExport = async () => {
+  try {
+    const response = await API.get("/deadlines/export", {
+      responseType: "blob",
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.setAttribute("download", "deadlines.csv");
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+  } catch (error) {
+    console.error("Export failed:", error);
+    alert("Failed to export CSV");
+  }
+};
+
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-500 to-indigo-600 p-4">
       <div className="max-w-7xl mx-auto">
@@ -78,6 +101,13 @@ function ListPage({ setEditData, setPage, setSelectedId }) {
         {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow mb-6 gap-3">
           <h2 className="text-xl font-bold">Deadlines</h2>
+
+          <button
+  onClick={handleExport}
+  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+>
+  Export CSV
+</button>
 
           <button
             onClick={() => {
